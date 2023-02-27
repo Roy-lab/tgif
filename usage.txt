@@ -1,0 +1,63 @@
+Usage:
+./run_tgif <tree file> <coordinates bed file> <optional arguments>
+
+Example:
+./run_tgif input/tree.txt input/coordinates.bed -o output/
+
+Input file format:
+<tree file>
+1	5	leaf1	input/matrix1.txt
+2	5	leaf2	input/matrix2.txt
+3	6	leaf3	input/matrix3.txt
+4	6	leaf4	input/matrix4.txt
+5	7	branch12	N/A
+6	7	branch34	N/A
+7	-1	root	N/A
+
+<coordinates bed file>
+chr5	0	40000	0
+chr5	40000	80000	1
+chr5	80000	120000	2
+chr5	120000	160000	3
+
+
+<input matrix file>
+0	0	1000.2
+0	1	1201.78
+10	1	200.7
+
+See README.md for more details on how these files interact.
+
+Optional arguments:
+-o <output path and prefix>  
+	Output file path and prefix. Note: will NOT create a directory 
+	if the specified directory does not already exist.
+	[Default] Output files saved to current directory.
+-l
+	Generate a file called parameters.log under the specified output
+	path (or current directory by default) that lists the parameter 
+	settings used.
+	[Default] No log file of parameters saved.
+-b
+	Generate files boundary_score.txt and background_score.txt under 
+	the specified output path (or current directory by default).                                                    
+	[Default] No boundary-score related files saved.
+-p       
+	Generate files boundary_pval.txt and boundary_adj_pval.txt under 
+	the specified output path (or current directory by default).                                                              
+	[Default] No p-value related files saved.
+-w <window size> 
+	Specify, in number of basepairs (e.g. 2000000), the size of the 
+	"window" or the dimension of the submatrices where factorization
+	will be applied.
+	[Default] 2000000 (i.e., 2MB)
+-s <step size>
+	Specify, in number of basepairs (e.g. 1000000), the size of the 
+	step size for sliding down the block diagonal of the input matrix 
+	to generate each  set of submatrices.      
+	[Default] 1000000 (i.e., 1MB)
+-a <alpha>
+	Specify an integer value used for the strength of the tree 
+	regularization.
+	[Default] 1000000
+

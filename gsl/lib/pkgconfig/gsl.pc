@@ -1,0 +1,11 @@
+prefix=/mnt/dv/wid/projects3/Roy-enhancer-promoter/tgif-c/tools/whole_pipeline/source/gsl
+exec_prefix=/mnt/dv/wid/projects3/Roy-enhancer-promoter/tgif-c/tools/whole_pipeline/source/gsl
+libdir=/mnt/dv/wid/projects3/Roy-enhancer-promoter/tgif-c/tools/whole_pipeline/source/gsl/lib
+includedir=/mnt/dv/wid/projects3/Roy-enhancer-promoter/tgif-c/tools/whole_pipeline/source/gsl/include
+GSL_CBLAS_LIB=-lgslcblas
+
+Name: GSL
+Description: GNU Scientific Library
+Version: 2.7
+Libs: -L/mnt/dv/wid/projects3/Roy-enhancer-promoter/tgif-c/tools/whole_pipeline/source/gsl/lib -lgsl ${GSL_CBLAS_LIB} -lm -lm 
+Cflags: -I/mnt/dv/wid/projects3/Roy-enhancer-promoter/tgif-c/tools/whole_pipeline/source/gsl/include

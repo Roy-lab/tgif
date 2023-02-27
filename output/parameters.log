@@ -1,0 +1,6 @@
+alpha = 1e+06
+FDR = 0.05
+window size = 4000000
+step size = 2000000
+min k = 2
+max k = 8
