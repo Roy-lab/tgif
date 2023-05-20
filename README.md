@@ -1,4 +1,11 @@
-### Tree-Guided Integrated Factorization (TGIF) to identify differential TAD boundaries
+### Tree-Guided Integrated Factorization (TGIF) to identify conserved & differential genome organization
+
+[![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](http://perso.crans.org/besson/LICENSE.html)
+[![Generic badge](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/Roy-lab/grinch/releases/tag/v1.0.0)
+
+TGIF applies multi-task non-negative matrix factorization (NMF) to multiple input Hi-C matrices to identify conserved or dynamic compartment and TAD boundaries.
+
+![alt text](figures-for-doc/overview.png)
 
 ### [Step 1] Install 
 
