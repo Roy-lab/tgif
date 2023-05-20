@@ -10,8 +10,10 @@
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_sort_vector.h>
 #include <gsl/gsl_spmatrix.h>
+#include <gsl/gsl_statistics_double.h>
 #include <list>
 #include <vector>
+#include <map>
 #include <math.h>
 #include <iostream>
 #include "utils.h"
@@ -287,9 +289,9 @@ int utils::print_progress_bar(double progress) {
 	for (int i = 0; i < barWidth; ++i) {
 		if (i < pos) cout << "=";
 		else if (i == pos) cout << ">";
-		else std::cout << " ";
+		else cout << " ";
 	}
-	std::cout << "] " << int(progress * 100.0) << "%" << endl;
+	cout << "] " << int(progress * 100.0) << "%" << endl;
 	return 0;
 }
 
@@ -370,3 +372,101 @@ int utils::pick_summit(gsl_vector* rejectNull, gsl_vector* score, gsl_vector* su
 	gsl_vector_set(summit_only, curr_summit_idx, 1);
 	return 0;
 }
+
+int utils::get_rowwise_correlation(gsl_matrix* X, gsl_matrix* C) {
+	int n = X->size1;
+	int m = X->size2;
+	for (int i = 0; i < n; i++) {
+		gsl_vector_view x_i = gsl_matrix_row(X, i);
+		bool i_all_zero = gsl_vector_isnull(&x_i.vector);
+		if (i_all_zero == true) {
+			gsl_vector_view c_i_ = gsl_matrix_row(C, i);
+			gsl_vector_set_zero(&c_i_.vector);
+			gsl_vector_view c__i = gsl_matrix_column(C, i);
+			gsl_vector_set_zero(&c__i.vector);
+		} else {
+			gsl_matrix_set(C, i, i, 1);
+			for (int j = i+1; j < n; j++) {
+				gsl_vector_view x_j = gsl_matrix_row(X, j);
+				double c = 0;
+				bool j_all_zero = gsl_vector_isnull(&x_j.vector);
+				if (j_all_zero == false) {
+					c = gsl_stats_correlation(x_i.vector.data,1,x_j.vector.data,1,n);
+				}
+				gsl_matrix_set(C, i, j, c);
+				gsl_matrix_set(C, j, i, c);
+			}
+		} 
+	}
+	return 0;
+}
+
+int utils::get_columnwise_max_idx(gsl_matrix* X, gsl_vector* idx) {
+	int m = X->size2;
+	for (int i = 0; i < m; i++) {
+		gsl_vector_view x_i = gsl_matrix_column(X, i);
+		gsl_vector_set(idx, i, gsl_vector_max_index(&x_i.vector));
+	}
+	return 0;
+}
+
+int utils::distancewise_normalization(gsl_matrix* X) {
+	int n = X->size1;
+	for (int i = 0; i < n; i++) {
+		gsl_vector_view diag = gsl_matrix_superdiagonal(X, i);
+		//double mean = gsl_stats_mean(diag.vector.data, 1, n-i);
+		double mean = 0;
+		for (int j = 0; j < (n-i); j++) {
+			mean += gsl_vector_get(&diag.vector, j);
+		}
+		mean /= (n-i);
+		if (mean > 0) {
+			gsl_vector_scale(&diag.vector, 1.0/mean);
+			if (i > 0) {
+				gsl_vector_view subdiag = gsl_matrix_subdiagonal(X, i);
+				gsl_vector_memcpy(&subdiag.vector, &diag.vector);
+			}
+		}
+	}
+	return 0;
+}
+
+int utils::get_rowwise_mean(gsl_matrix* X, gsl_vector* mean) {
+	size_t n = X->size1, m=X->size2, mtda=X->tda;
+	for (size_t i = 0; i < n; i++) {
+		double sum = 0;
+		for (size_t j = 0; j < m; j++) {
+			sum += X->data[i * mtda + j];
+		}
+		gsl_vector_set(mean, i, sum/((double) m));
+	}
+	return 0;
+}
+
+
+map<int,char> utils::map_cluster_to_compartment(gsl_vector* cluster_id, gsl_vector* mean_oe) {
+	//cluster whose regions have higher mean O/E value (stored in M) 
+	//is assigned to compartment A
+	map<int,double> cluster_mean;
+	map<int,int> cluster_num_regions;
+	map<int,char> cid_to_ab;
+	int n = cluster_id->size;
+	for (int i = 0; i < n; i++) {
+		int cid = (int) gsl_vector_get(cluster_id, i);
+		cluster_mean[cid] += gsl_vector_get(mean_oe, i);
+		cluster_num_regions[cid] += 1;
+	}
+	for (int i = 0; i < 2; i++) {
+		cluster_mean[i] /= cluster_num_regions[i];
+	}
+	if (cluster_mean[0] > cluster_mean[1]) {
+		cid_to_ab[0] = 'A';
+		cid_to_ab[1] = 'B';
+	} else {
+		cid_to_ab[0] = 'B';
+		cid_to_ab[1] = 'A';
+	}
+	return cid_to_ab;
+}
+
+

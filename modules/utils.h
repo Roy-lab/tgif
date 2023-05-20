@@ -1,6 +1,7 @@
 #include <gsl/gsl_spmatrix.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
+#include <map>
 #include <vector>
 #ifndef _utils_
 #define _utils_
@@ -27,5 +28,10 @@ namespace utils
 	int get_csr_submatrix(gsl_spmatrix*, gsl_matrix*, int, int);
 	int get_local_pval_from_neighbors(gsl_vector*, gsl_vector*, gsl_vector*, int);
 	int pick_summit(gsl_vector*, gsl_vector*, gsl_vector*);
+	int get_rowwise_correlation(gsl_matrix*, gsl_matrix*);
+	int get_columnwise_max_idx(gsl_matrix*, gsl_vector*);
+	int distancewise_normalization(gsl_matrix*);
+	int get_rowwise_mean(gsl_matrix*, gsl_vector*);
+	map<int,char> map_cluster_to_compartment(gsl_vector*, gsl_vector*);
 };
 #endif

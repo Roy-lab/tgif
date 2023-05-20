@@ -1,0 +1,5 @@
+1	5	ES	input/tgif-dc/ES_chr19_100kb.txt
+2	4	NPC	input/tgif-dc/NPC_chr19_100kb.txt
+3	4	CN	input/tgif-dc/CN_chr19_100kb.txt
+4	5	neural	N/A	
+5	-1	root	N/A

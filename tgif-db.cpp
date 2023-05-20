@@ -39,6 +39,7 @@ int main(int argc, char **argv)
 
 	const char* treeFile;
 	const char* bedFile;
+	bool diff_compartment = false; //by default, do differential TAD analysis
 	int original_N = -1;
 	int N = -1;
 	int windowSize = 2000000;
@@ -54,13 +55,14 @@ int main(int argc, char **argv)
 	int maxIter = 300; // used in TGIF, will keep fixed
 	double tol = 1; // used in TGIF, will keep fixed
 	double alpha = 1000000;
+	double threshold = 0.5; // sparsity threshold for filtering rows/cols
 	bool outputBoundaryScore = false;
 	bool outputPval = false;
 	bool outputQval = false;
 	string usage = string("usage.txt");
 
 	int c;
-	while((c = getopt(argc, argv, "w:s:m:x:o:r:a:f:bpqlh")) != -1)
+	while((c = getopt(argc, argv, "w:s:m:x:o:r:a:f:t:bpqlh")) != -1)
 		switch (c) {
 			case 'w':
 				windowSize = atoi(optarg);
@@ -82,6 +84,9 @@ int main(int argc, char **argv)
 				break;
 			case 'a':
 				alpha = atof(optarg);
+				break;
+			case 't':
+				threshold = atof(optarg);
 				break;
 			case 'b':
 				outputBoundaryScore = true;
@@ -122,12 +127,16 @@ int main(int argc, char **argv)
 	string chro;
 	vector<int> parentIds, coords;
 	vector<string> aliases, fileNames;
-	vector<gsl_spmatrix*> fullMatrices;
 
+	cout << "[TGIF in differential boundary analysis mode]" << endl;
 	cout << "Reading in input files..." << endl;	
-	//get N and resolution
 	int binSize;
 	io::read_metadata(bedFileName, binSize, original_N, coords, chro);
+	io::read_tree(treeFileName, parentIds, aliases, fileNames);
+	int nTasks = fileNames.size();
+	int nNodes = parentIds.size();
+
+	// sliding window size for generating submatrices
 	windowSize /= binSize;
 	stepSize /= binSize;
 	if (windowSize < 100) {
@@ -135,18 +144,14 @@ int main(int argc, char **argv)
 		windowSize = 100;
 		stepSize = 50;
 	}
-	
-	//read tree file
-	io::read_tree(treeFileName, parentIds, aliases, fileNames);
+
+	// remove sprase rows
 	int map[original_N];
-	io::map_nonzero_rows(original_N, map, fileNames, N, windowSize);
-	//cout << "\tOriginal n = " << original_N << endl;
-	//cout << "\tAfter-filter n = " << N << endl;
+	io::map_nonzero_rows(original_N, map, fileNames, N, windowSize, threshold);
 	cout <<"(Filtered out " << original_N-N << "/" << original_N << " regions with fewer than half of neighbors with non-zero interactions within the specified window size in at least one of the input datasets.)" << endl;
 
 	// read full matrices
-	int nTasks = fileNames.size();
-	int nNodes = parentIds.size();
+	vector<gsl_spmatrix*> fullMatrices;
 	int nzmax = N + (windowSize-1) * (2*N - windowSize); 
 	for (int i = 0; i < nTasks; i++) {
 		gsl_spmatrix* tmp = gsl_spmatrix_alloc_nzmax(N, N, nzmax, GSL_SPMATRIX_COO);

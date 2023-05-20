@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <list>
+#include <map>
 #include <math.h>
 #include <cmath>
 #include <sstream>
@@ -109,7 +110,7 @@ int io::read_vector(string inputFile, gsl_vector* x) {
 	return 0;
 }
 
-int io::map_nonzero_rows(int n, int map[], vector<string> filenames, int &N, int radius) {
+int io::map_nonzero_rows(int n, int map[], vector<string> filenames, int &N, int radius, double threshold) {
 	int numTasks = filenames.size();
 	gsl_matrix* nonzero = gsl_matrix_calloc(n, numTasks);	
 	for (int t = 0; t < numTasks; t++) {
@@ -125,7 +126,7 @@ int io::map_nonzero_rows(int n, int map[], vector<string> filenames, int &N, int
 		input.close();
 	}
 	int new_idx = 0;
-	double threshold = 0.5;
+	//double threshold = 0.5;
 	for (int i = 0; i < n; i++) {
 		bool pass = true;
 		int numNeighbors = min(radius, n-i) + min(i, radius) +1;
@@ -287,5 +288,23 @@ int io::read_metadata(string inputFile, int &binsize, int &n, vector<int>& coord
 	}
 	n = n + 1; // zero-indexed
 	f.close();
+	return 0;
+}
+
+int io::write_compartments_to_file(string outputFile,string chro, vector<int>& coord, int binSize,string header, gsl_matrix* X, map<int,char> cid_to_ab) {
+	int rowNum = X-> size1;
+	int colNum = X-> size2;
+	ofstream ofs;
+	ofs.open(outputFile.c_str());
+	ofs << "#chro\tstart\tend\t" << header << endl;
+	for (int i = 0; i < rowNum; i++) {
+		ofs << chro << "\t" << coord[i] << "\t" << coord[i] + binSize;
+		for (int j = 0; j < colNum; j++) {
+			int cid = (int) X->data[i*X->tda + j];
+			ofs << "\t" << cid_to_ab[cid];
+		}
+		ofs << endl;
+	}
+	ofs.close();
 	return 0;
 }

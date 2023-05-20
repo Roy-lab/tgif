@@ -21,7 +21,9 @@ rsvd:
 	$(CC) -c -o modules/random_svd/rsvd.o modules/random_svd/low_rank_svd_algorithms_gsl.c -I${INCLUDE_PATH}
 
 tgif:
-	$(XX) run_tgif.cpp modules/*.cpp modules/random_svd/*.o -o run_tgif $(CFLAGS) -L${LIBRARY_PATH} ${GSLFLAGS} -I${INCLUDE_PATH}
+	$(XX) tgif-db.cpp modules/*.cpp modules/random_svd/*.o -o tgif-db $(CFLAGS) -L${LIBRARY_PATH} ${GSLFLAGS} -I${INCLUDE_PATH}
+	$(XX) tgif-dc.cpp modules/*.cpp modules/random_svd/*.o -o tgif-dc $(CFLAGS) -L${LIBRARY_PATH} ${GSLFLAGS} -I${INCLUDE_PATH}
 
 clean:
-	rm run_tgif
+	rm tgif-db
+	rm tgif-dc

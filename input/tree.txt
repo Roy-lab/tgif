@@ -1,7 +1,0 @@
-1	5	leaf1	input/matrix1.txt
-2	5	leaf2	input/matrix2.txt
-3	6	leaf3	input/matrix3.txt
-4	6	leaf4	input/matrix4.txt
-5	7	branch12	N/A
-6	7	branch34	N/A
-7	-1	root	N/A
