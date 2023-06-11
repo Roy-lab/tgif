@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 	for (int i =1; i < nTasks; i++) {
 		header += "\t" + aliases[i];
 	}
-	//io::write_dense_matrix_with_header(outputPrefix+"cluster_assignment.txt",header,maxDimClusters);
+	io::write_dense_matrix_with_header(outputPrefix+"cluster_assignment.txt",header,maxDimClusters);
 
 	// if the mean O/E counts in cluster 0 is higher than that of cluster 1, cluster 0 = compartment A
 	gsl_vector_view cid = gsl_matrix_column(maxDimClusters,0);
