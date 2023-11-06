@@ -132,7 +132,7 @@ int io::map_nonzero_rows(int n, int map[], vector<string> filenames, int &N, int
 		int numNeighbors = min(radius, n-i) + min(i, radius) +1;
 		for (int t = 0; t < numTasks; t++) {
 			// if in at least one of the tasks the row is too sparse skip it
-			if (gsl_matrix_get(nonzero, i, t)/numNeighbors < threshold) {
+			if (gsl_matrix_get(nonzero, i, t)/numNeighbors <= threshold) {
 				pass = false;
 				map[i] = -1;
 				break;
@@ -291,16 +291,17 @@ int io::read_metadata(string inputFile, int &binsize, int &n, vector<int>& coord
 	return 0;
 }
 
-int io::write_compartments_to_file(string outputFile,string chro, vector<int>& coord, int binSize,string header, gsl_matrix* X, map<int,char> cid_to_ab) {
+int io::write_compartments_to_file(string outputFile,string chro, vector<int>& coord, int binSize,string header, gsl_matrix* X, map<int,char> cid_to_ab, int map[], int n) {
 	int rowNum = X-> size1;
 	int colNum = X-> size2;
 	ofstream ofs;
 	ofs.open(outputFile.c_str());
 	ofs << "#chro\tstart\tend\t" << header << endl;
-	for (int i = 0; i < rowNum; i++) {
+	for (int i = 0; i < n; i++) {
 		ofs << chro << "\t" << coord[i] << "\t" << coord[i] + binSize;
+		int new_i = map[i];
 		for (int j = 0; j < colNum; j++) {
-			int cid = (int) X->data[i*X->tda + j];
+			int cid = (int) X->data[new_i*X->tda + j];
 			ofs << "\t" << cid_to_ab[cid];
 		}
 		ofs << endl;

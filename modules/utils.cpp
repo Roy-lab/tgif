@@ -444,17 +444,20 @@ int utils::get_rowwise_mean(gsl_matrix* X, gsl_vector* mean) {
 }
 
 
-map<int,char> utils::map_cluster_to_compartment(gsl_vector* cluster_id, gsl_vector* mean_oe) {
+map<int,char> utils::map_cluster_to_compartment(gsl_matrix* cluster_id, gsl_matrix* mean_oe) {
 	//cluster whose regions have higher mean O/E value (stored in M) 
 	//is assigned to compartment A
 	map<int,double> cluster_mean;
 	map<int,int> cluster_num_regions;
 	map<int,char> cid_to_ab;
-	int n = cluster_id->size;
+	int n = cluster_id->size1;
+	int T = cluster_id->size2;
 	for (int i = 0; i < n; i++) {
-		int cid = (int) gsl_vector_get(cluster_id, i);
-		cluster_mean[cid] += gsl_vector_get(mean_oe, i);
-		cluster_num_regions[cid] += 1;
+		for (int t = 0; t < T; t++) {
+			int cid = (int) gsl_matrix_get(cluster_id, i, t);
+			cluster_mean[cid] += gsl_matrix_get(mean_oe, i, t);
+			cluster_num_regions[cid] += 1;
+		}
 	}
 	for (int i = 0; i < 2; i++) {
 		cluster_mean[i] /= cluster_num_regions[i];

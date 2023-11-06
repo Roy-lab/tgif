@@ -24,6 +24,12 @@ tgif:
 	$(XX) tgif-db.cpp modules/*.cpp modules/random_svd/*.o -o tgif-db $(CFLAGS) -L${LIBRARY_PATH} ${GSLFLAGS} -I${INCLUDE_PATH}
 	$(XX) tgif-dc.cpp modules/*.cpp modules/random_svd/*.o -o tgif-dc $(CFLAGS) -L${LIBRARY_PATH} ${GSLFLAGS} -I${INCLUDE_PATH}
 
+dc:
+	$(XX) tgif-dc.cpp modules/*.cpp modules/random_svd/*.o -o tgif-dc $(CFLAGS) -L${LIBRARY_PATH} ${GSLFLAGS} -I${INCLUDE_PATH}
+
+db:
+	$(XX) tgif-db.cpp modules/*.cpp modules/random_svd/*.o -o tgif-db $(CFLAGS) -L${LIBRARY_PATH} ${GSLFLAGS} -I${INCLUDE_PATH}
+
 clean:
 	rm tgif-db
 	rm tgif-dc

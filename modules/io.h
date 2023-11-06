@@ -24,6 +24,6 @@ namespace io
 	int read_metadata(string, int&, int&, vector<int>&, string&);
 	int read_into_coo_matrix_within_distance(string, int, gsl_spmatrix*, int[]);
 	int print_usage(string);
-	int write_compartments_to_file(string,string,vector<int>&,int,string, gsl_matrix*, map<int,char>);
+	int write_compartments_to_file(string,string,vector<int>&,int,string, gsl_matrix*, map<int,char>, int[], int);
 };
 #endif

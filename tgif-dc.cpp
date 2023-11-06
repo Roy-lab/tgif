@@ -41,6 +41,7 @@ int main(int argc, char **argv)
 	const char* bedFile;
 	int original_N = -1;
 	int N = -1;
+	int k = 2;
 	string outputPrefix = string("");
 	int randomState = 1010;
 	bool verbose = true;
@@ -53,8 +54,11 @@ int main(int argc, char **argv)
 	string usage = string("usage.txt");
 
 	int c;
-	while((c = getopt(argc, argv, "o:r:a:eulh")) != -1)
+	while((c = getopt(argc, argv, "k:o:r:a:eulh")) != -1)
 		switch (c) {
+			case 'k':
+				k = atoi(optarg);
+				break;
 			case 'o':
 				outputPrefix = string(optarg);
 				break;
@@ -106,12 +110,16 @@ int main(int argc, char **argv)
 	int nTasks = fileNames.size();
 	int nNodes = parentIds.size();
 
+	int idx_map[original_N];
+	io::map_nonzero_rows(original_N, idx_map, fileNames, N, original_N, 0);
+
 	// get correlation matrices 
 	vector<gsl_matrix*> corrMatrices;
-	gsl_matrix* OE = gsl_matrix_calloc(original_N, original_N);	
-	gsl_matrix* mean_OE_per_region = gsl_matrix_alloc(original_N, nTasks);
+	gsl_matrix* OE = gsl_matrix_calloc(N, N);	
+	gsl_matrix* mean_OE_per_region = gsl_matrix_alloc(N, nTasks);
 	for (int i = 0; i < nTasks; i++) {
-		io::read_sparse_matrix(fileNames[i], OE);
+		//io::read_sparse_matrix(fileNames[i], OE);
+		io::read_sparse_matrix_nonzero_rows_only(fileNames[i], OE, idx_map);
 		// 1. get O/E matrix, if given raw counts:
 		if (!inputAlreadyOE) {
 			utils::distancewise_normalization(OE);
@@ -120,7 +128,7 @@ int main(int argc, char **argv)
 		gsl_vector_view mean_vector = gsl_matrix_column(mean_OE_per_region, i);
 		utils::get_rowwise_mean(OE, &mean_vector.vector);
 		// 2. get correlation of O/E matrix and upshift by 1:
-		gsl_matrix* C = gsl_matrix_alloc(original_N, original_N);
+		gsl_matrix* C = gsl_matrix_alloc(N, N);
 		utils::get_rowwise_correlation(OE, C);
 		gsl_matrix_add_constant(C, 1);
 		corrMatrices.push_back(C);	
@@ -130,7 +138,6 @@ int main(int argc, char **argv)
 	gsl_matrix_free(OE);
 
 	// run tgif
-	int k = 2;
 	TGIF tgif = TGIF(alpha, k, maxIter, tol, randomState, false, false, outputPrefix);
 	tgif.make_tree(parentIds, aliases, nTasks);
 	tgif.fit(corrMatrices, 0);
@@ -139,7 +146,7 @@ int main(int argc, char **argv)
 	if (outputUandV) {
 		tgif.print_factors();
 	}
-	gsl_matrix* maxDimClusters = gsl_matrix_alloc(original_N, nTasks);
+	gsl_matrix* maxDimClusters = gsl_matrix_alloc(N, nTasks);
 	vector<Node*>& tree = tgif.get_tree(); 
 	for (int i = 0; i < nTasks; i++) {
 		gsl_vector_view c = gsl_matrix_column(maxDimClusters, i);
@@ -149,13 +156,16 @@ int main(int argc, char **argv)
 	for (int i =1; i < nTasks; i++) {
 		header += "\t" + aliases[i];
 	}
-	io::write_dense_matrix_with_header(outputPrefix+"cluster_assignment.txt",header,maxDimClusters);
+	io::write_dense_matrix_with_header_and_map(outputPrefix+"cluster_assignment.txt",header,maxDimClusters,idx_map,original_N);
 
 	// if the mean O/E counts in cluster 0 is higher than that of cluster 1, cluster 0 = compartment A
-	gsl_vector_view cid = gsl_matrix_column(maxDimClusters,0);
-	gsl_vector_view mean_oe0 = gsl_matrix_column(mean_OE_per_region, 0);
-	map<int,char> cid_to_ab = utils::map_cluster_to_compartment(&cid.vector, &mean_oe0.vector);
-	io::write_compartments_to_file(outputPrefix+"compartment_assignment.txt",chro,coords,binSize,header,maxDimClusters,cid_to_ab);
+	if (k == 2) {
+		//gsl_vector_view cid = gsl_matrix_column(maxDimClusters,0);
+		//gsl_vector_view mean_oe0 = gsl_matrix_column(mean_OE_per_region, 0);
+		//map<int,char> cid_to_ab = utils::map_cluster_to_compartment(&cid.vector, &mean_oe0.vector);
+		map<int,char> cid_to_ab = utils::map_cluster_to_compartment(maxDimClusters, mean_OE_per_region);
+		io::write_compartments_to_file(outputPrefix+"compartment_assignment.txt",chro,coords,binSize,header,maxDimClusters,cid_to_ab, idx_map, original_N);
+	}
 
 	gsl_matrix_free(maxDimClusters);
 	gsl_matrix_free(mean_OE_per_region);

@@ -32,6 +32,6 @@ namespace utils
 	int get_columnwise_max_idx(gsl_matrix*, gsl_vector*);
 	int distancewise_normalization(gsl_matrix*);
 	int get_rowwise_mean(gsl_matrix*, gsl_vector*);
-	map<int,char> map_cluster_to_compartment(gsl_vector*, gsl_vector*);
+	map<int,char> map_cluster_to_compartment(gsl_matrix*, gsl_matrix*);
 };
 #endif
