@@ -1,0 +1,5 @@
+1	5	ES	input/tgif-db/ES_chr19_25kb.txt
+2	4	NPC	input/tgif-db/NPC_chr19_25kb.txt
+3	4	CN	input/tgif-db/CN_chr19_25kb.txt
+4	5	branch1	N/A
+5	-1	root	N/A

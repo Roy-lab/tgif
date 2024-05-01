@@ -81,6 +81,11 @@ Optional arguments:
 	Use this flag if the input matrices for TGIF-DC are O/E count 
 	matrices.
 	[Default] TGIF-DC assumes input matrices are raw count matrices.
+-k <number of clusters>
+	By default, TGIF-DC operates with k=2 and finds 2 clusters of
+	genomic regions that correspond to A or B compartments. To find
+	subcompartments, i.e., more granular clusters, increase k.
 -u
 	Generate output files that contain the factors Us and Vs.
 	[Default] no factor files are generated.
+

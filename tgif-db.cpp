@@ -8,6 +8,8 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_sort_vector.h>
+#include <gsl/gsl_cdf.h>
+#include <gsl/gsl_statistics_double.h>
 #include <list>
 #include <vector>
 #include <math.h>
@@ -278,7 +280,7 @@ int main(int argc, char **argv)
 		header += "\t" + aliases[i];
 	}
 	if (outputBoundaryScore) {
-		io::write_dense_matrix_with_header_and_map(outputPrefix + "boundary_score.txt", header, boundaryScore, map, original_N);
+		io::write_dense_matrix_with_bed_header_and_map(outputPrefix + "boundary_score.txt", chro, coords, binSize, header, boundaryScore, map, original_N);
 		io::write_vector(outputPrefix + "background_score.txt",backgroundScore);
 	}
 
@@ -301,25 +303,82 @@ int main(int argc, char **argv)
 		utils::pick_summit(&r.vector, &s.vector, &so.vector);
 	}
 	gsl_vector_free(backgroundScore);
-	io::write_dense_matrix_with_header_and_map(outputPrefix + "significant_boundaries.txt", header, rejectNull, map, original_N);
-	io::write_dense_matrix_with_header_and_map(outputPrefix + "significant_boundaries_summit_only.txt", header, summit_only, map, original_N);
-	gsl_matrix_free(boundaryScore);
+	io::write_dense_matrix_with_bed_header_and_map(outputPrefix + "significant_boundaries.txt", chro, coords, binSize, header, rejectNull, map, original_N);
+	io::write_dense_matrix_with_bed_header_and_map(outputPrefix + "significant_boundaries_summit_only.txt", chro, coords, binSize, header, summit_only, map, original_N);
 
 	if (outputPval) {
-		io::write_dense_matrix_with_header_and_map(outputPrefix + "boundary_pval.txt", header, Pvals, map, original_N);
-		io::write_dense_matrix_with_header_and_map(outputPrefix + "boundary_adj_pval.txt", header, Qvals, map, original_N);
+		io::write_dense_matrix_with_bed_header_and_map(outputPrefix + "boundary_pval.txt",chro, coords, binSize, header, Pvals, map, original_N);
+		io::write_dense_matrix_with_bed_header_and_map(outputPrefix + "boundary_adj_pval.txt",chro, coords, binSize, header, Qvals, map, original_N);
 	}
 	gsl_matrix_free(Pvals);
 	gsl_matrix_free(Qvals);
 
 	// Annotate each region for context specificity
-	Annotations annot = Annotations(nTasks, aliases);
+	//Annotations annot = Annotations(nTasks, aliases);
 	//annot.assign_states(rejectNull);
-	annot.assign_states(summit_only);
-	annot.print_annotations(outputPrefix + "annotations.txt", chro, coords, binSize, original_N, map);
+	//annot.assign_states(summit_only);
+	//annot.print_annotations(outputPrefix + "annotations.txt", chro, coords, binSize, original_N, map);
+
+	/***
+ 	*Pairwise significantly differential boundaries
+ 	***/
+	gsl_vector* dist = gsl_vector_alloc(N);
+	gsl_vector* pval = gsl_vector_alloc(N);
+	gsl_vector* qval = gsl_vector_alloc(N);
+	gsl_vector* reject_null = gsl_vector_alloc(N);
+
+	for (int i=0; i < nTasks; i++) {
+		for (int j=i+1; j < nTasks; j++) {
+			// get abs difference in boundary score between timepoint i and j for region idx
+			for (int idx =0; idx < N; idx++) {
+				double diff = gsl_matrix_get(boundaryScore, idx, i) - gsl_matrix_get(boundaryScore, idx, j);
+				if (diff < 0) {
+					diff  = diff * -1;
+				}
+				gsl_vector_set(dist, idx, diff);
+			}		
+			// get mean and std of differences in consistently non-boundary regions
+			double distances_in_consistent_regions[N];
+			int count_consistent_regions = 0;
+			for (int idx=0;idx < N; idx++) {
+				if ((gsl_matrix_get(summit_only, idx, i) == 0) && (gsl_matrix_get(summit_only, idx, j)==0)) { 
+					distances_in_consistent_regions[count_consistent_regions] = gsl_vector_get(dist,idx);
+					count_consistent_regions++;
+				}
+			}
+			double mean = gsl_stats_mean(distances_in_consistent_regions, 1, count_consistent_regions);
+			double std = gsl_stats_sd_m(distances_in_consistent_regions, 1, count_consistent_regions, mean);
+
+			// get p-value (gaussian CDF upper tail) based on given mean and std
+			for (int idx=0; idx < N; idx++) {
+				double x = gsl_vector_get(dist, idx) - mean;
+				gsl_vector_set(pval, idx, gsl_cdf_gaussian_Q(x, std));
+			}
+
+			// FDR correction
+			utils::correct_for_fdr(pval, 0.05, qval, reject_null);
+			// output significantly differential boundary regions
+			string pairFileName = outputPrefix + aliases[i] + "_vs_" + aliases[j] + "_significantly_differential_boundary_regions"; 
+			bool writeToFile[N];
+			for (int idx = 0; idx < N; idx++) {
+				bool changed = false;
+				if ((gsl_matrix_get(summit_only, idx, i) - gsl_matrix_get(summit_only, idx, j)) != 0) {
+					changed = true;
+				}
+				writeToFile[idx] = changed;
+			} 
+			io::write_significant_regions(pairFileName + ".txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N);	
+			//io::write_significant_regions_for_debug(pairFileName + "_DEBUG.txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N);
+		}
+	}
 
 	gsl_matrix_free(summit_only);
 	gsl_matrix_free(rejectNull);
+	gsl_matrix_free(boundaryScore);
+	gsl_vector_free(pval);
+	gsl_vector_free(qval);
+	gsl_vector_free(reject_null);
+	gsl_vector_free(dist);
 
 	// Output parameters info log optionallly
 	if (log) {
@@ -333,6 +392,7 @@ int main(int argc, char **argv)
 		ofs << "max k = " << maxK << endl;
 		ofs.close();
 	}
+
 
 	struct timeval endTime;
 	gettimeofday(&endTime,NULL);

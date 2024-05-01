@@ -472,4 +472,24 @@ map<int,char> utils::map_cluster_to_compartment(gsl_matrix* cluster_id, gsl_matr
 	return cid_to_ab;
 }
 
+int utils::get_norm_by_row(gsl_matrix* X, gsl_vector* norm) {
+	int n = X->size2;
+	for (int i=0; i < n; i++) {
+		gsl_vector_view x = gsl_matrix_column(X, i);
+		gsl_vector_set(norm, i, gsl_blas_dnrm2(&x.vector));
+	}
+	return 0;
+}
 
+int utils::get_cosine_distance_by_row(gsl_matrix* X, gsl_vector* x_norm, gsl_matrix* Y, gsl_vector* y_norm, gsl_vector* dist) {
+	int n = X->size2;
+	for (int i=0; i < n; i++) {
+		gsl_vector_view x = gsl_matrix_column(X, i);
+		gsl_vector_view y = gsl_matrix_column(Y, i);
+		double num = 0;
+		gsl_blas_ddot(&x.vector, &y.vector, &num);
+		double denom = gsl_vector_get(x_norm,i) * gsl_vector_get(y_norm,i);
+		gsl_vector_set(dist, i, 1-num/denom); 
+	}
+	return 0;
+}

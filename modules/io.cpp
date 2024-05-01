@@ -301,10 +301,67 @@ int io::write_compartments_to_file(string outputFile,string chro, vector<int>& c
 		ofs << chro << "\t" << coord[i] << "\t" << coord[i] + binSize;
 		int new_i = map[i];
 		for (int j = 0; j < colNum; j++) {
-			int cid = (int) X->data[new_i*X->tda + j];
-			ofs << "\t" << cid_to_ab[cid];
+			if (new_i < 0) {
+				ofs << "\tN/A";
+			} else {
+				int cid = (int) X->data[new_i*X->tda + j];
+				ofs << "\t" << cid_to_ab[cid];
+			}
 		}
 		ofs << endl;
+	}
+	ofs.close();
+	return 0;
+}
+
+int io::write_dense_matrix_with_bed_header_and_map(string outputFile, string chro, vector<int>& coord, int binSize, string header, gsl_matrix* X, int map[], int n) {
+	int rowNum = n; 
+	int colNum = X-> size2;
+	ofstream ofs;
+	ofs.open(outputFile.c_str());
+	ofs << "#chro\tstart\end\t" << header << endl;
+	for (int i = 0; i < rowNum; i++) {
+		ofs << chro << "\t" << coord[i] << "\t" << coord[i]+binSize << "\t";
+		for (int j = 0; j < colNum; j++) {
+			if (map[i] >= 0) {
+				ofs << X->data[map[i] * X->tda + j] << "\t";
+			} else {
+				ofs << "N/A\t";
+			}
+		}	
+		ofs << endl;
+	}
+	ofs.close();
+	return 0;
+}
+
+int io::write_significant_regions(string outputFile, string chro, vector<int>& coord, int binSize, bool writeToFile[], gsl_vector* metric, gsl_vector* pval, gsl_vector* qval, gsl_vector* reject_null, int map[], int n) {
+	ofstream ofs;
+	ofs.open(outputFile.c_str());
+	ofs << "#chro\tstart\tend\t|diff|\tpval\tpadj" << endl;
+	for (int i=0; i <n; i++) {
+		int new_i = map[i];
+		if (new_i >= 0) {
+			if ((writeToFile[new_i]) && (gsl_vector_get(reject_null, new_i) == 1)) { 
+				ofs << chro << "\t" << coord[i] << "\t" << coord[i]+binSize << "\t" << gsl_vector_get(metric, new_i) << "\t" << gsl_vector_get(pval, new_i) << "\t" << gsl_vector_get(qval, new_i) << "\t" <<  endl;
+			}
+		}
+	}
+	ofs.close();
+	return 0;
+}
+
+int io::write_significant_regions_for_debug(string outputFile, string chro, vector<int>& coord, int binSize, bool writeToFile[], gsl_vector* metric, gsl_vector* pval, gsl_vector* qval, gsl_vector* reject_null, int map[], int n) {
+	ofstream ofs;
+	ofs.open(outputFile.c_str());
+	for (int i=0; i <n; i++) {
+		int new_i = map[i];
+		ofs << chro << "\t" << coord[i] << "\t" << coord[i]+binSize << "\t";
+		if (new_i >= 0) {
+			ofs << gsl_vector_get(metric, new_i) << "\t" << gsl_vector_get(pval, new_i) << "\t" << gsl_vector_get(qval, new_i) << "\t" << writeToFile[new_i] << "\t" << (bool) gsl_vector_get(reject_null, new_i) << endl;
+		} else {
+			ofs << "N/A\tN/A\tN/A\tN/A\tN/A" << endl;
+		}
 	}
 	ofs.close();
 	return 0;

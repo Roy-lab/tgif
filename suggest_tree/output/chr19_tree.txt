@@ -1,0 +1,5 @@
+1	5	ES	input/ES_chr19_25kb.txt
+2	4	NPC	input/NPC_chr19_25kb.txt
+3	4	CN	input/CN_chr19_25kb.txt
+4	5	branch1	N/A
+5	-1	root	N/A

@@ -1,0 +1,3 @@
+1	ES	input/ES_chr19_25kb.txt
+2	NPC	input/NPC_chr19_25kb.txt
+3	CN	input/CN_chr19_25kb.txt

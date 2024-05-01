@@ -8,6 +8,8 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_sort_vector.h>
+#include <gsl/gsl_cdf.h>
+#include <gsl/gsl_statistics_double.h>
 #include <list>
 #include <vector>
 #include <math.h>
@@ -156,7 +158,7 @@ int main(int argc, char **argv)
 	for (int i =1; i < nTasks; i++) {
 		header += "\t" + aliases[i];
 	}
-	io::write_dense_matrix_with_header_and_map(outputPrefix+"cluster_assignment.txt",header,maxDimClusters,idx_map,original_N);
+	io::write_dense_matrix_with_bed_header_and_map(outputPrefix+"cluster_assignment.txt",chro, coords, binSize,header,maxDimClusters,idx_map,original_N);
 
 	// if the mean O/E counts in cluster 0 is higher than that of cluster 1, cluster 0 = compartment A
 	if (k == 2) {
@@ -167,11 +169,74 @@ int main(int argc, char **argv)
 		io::write_compartments_to_file(outputPrefix+"compartment_assignment.txt",chro,coords,binSize,header,maxDimClusters,cid_to_ab, idx_map, original_N);
 	}
 
-	gsl_matrix_free(maxDimClusters);
 	gsl_matrix_free(mean_OE_per_region);
 	// free all correlation matrices
 	for (int i = 0; i < corrMatrices.size(); i++) {
 		gsl_matrix_free(corrMatrices[i]);
+	}
+
+	vector<gsl_matrix*> factors;
+	vector<gsl_vector*> norms;
+
+	for (int t=0; t < nTasks; t++) {
+		gsl_matrix* factor = ((Leaf*) tree[t])->get_U(); 
+		factors.push_back(factor);
+		gsl_vector* norm = gsl_vector_alloc(N);
+		utils::get_norm_by_row(factor,norm);
+		norms.push_back(norm);
+	} 
+
+	gsl_vector* dist = gsl_vector_alloc(N);
+	gsl_vector* pval = gsl_vector_alloc(N);
+	gsl_vector* qval = gsl_vector_alloc(N);
+	gsl_vector* reject_null = gsl_vector_alloc(N);
+
+	for (int i=0; i < nTasks; i++) {
+		for (int j=i+1; j < nTasks; j++) {
+			utils::get_cosine_distance_by_row(factors[i],norms[i],factors[j],norms[j], dist);
+
+			//get mean & std for distances of 'consistent' regions
+			double distances_in_consistent_regions[N];
+			int count_consistent_regions = 0;
+			for (int idx=0;idx < N; idx++) {
+				if (gsl_matrix_get(maxDimClusters, idx, i) == gsl_matrix_get(maxDimClusters, idx, j)) { 
+					distances_in_consistent_regions[count_consistent_regions] = gsl_vector_get(dist,idx);
+					count_consistent_regions++;
+				}
+			}
+			double mean = gsl_stats_mean(distances_in_consistent_regions, 1, count_consistent_regions);
+			double std = gsl_stats_sd_m(distances_in_consistent_regions, 1, count_consistent_regions, mean);
+			
+			//get p-value (gaussian CDF upper tail) for each dist with given mean and std
+			for (int idx=0; idx < N; idx++) {
+				double x = gsl_vector_get(dist, idx) - mean;
+				gsl_vector_set(pval, idx, gsl_cdf_gaussian_Q(x, std));
+			}
+			//FDR correction
+			utils::correct_for_fdr(pval, 0.05, qval, reject_null);	
+			//output sig diff regions
+			string pairFileName = outputPrefix + aliases[i] + "_vs_" + aliases[j] + "_significantly_differential_compartmental_regions"; 
+			bool writeToFile[N];
+			for (int idx = 0; idx < N; idx++) {
+				bool changed = false;
+				if (gsl_matrix_get(maxDimClusters, idx, i) != gsl_matrix_get(maxDimClusters, idx, j)) {
+					changed = true;
+				}
+				writeToFile[idx] = changed;
+			} 
+			io::write_significant_regions(pairFileName + ".txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, idx_map, original_N);	
+			//io::write_significant_regions_for_debug(pairFileName + "_DEBUG.txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, idx_map, original_N);	
+		}
+	}
+
+	gsl_matrix_free(maxDimClusters);
+	gsl_vector_free(pval);
+	gsl_vector_free(qval);
+	gsl_vector_free(reject_null);
+	gsl_vector_free(dist);
+
+	for (int t=0; t < nTasks;t++) {
+		gsl_vector_free(norms[t]);
 	}
 
 	// Output parameters info log optionallly

@@ -33,5 +33,7 @@ namespace utils
 	int distancewise_normalization(gsl_matrix*);
 	int get_rowwise_mean(gsl_matrix*, gsl_vector*);
 	map<int,char> map_cluster_to_compartment(gsl_matrix*, gsl_matrix*);
+	int get_norm_by_row(gsl_matrix*, gsl_vector*);
+	int get_cosine_distance_by_row(gsl_matrix*, gsl_vector*, gsl_matrix*,gsl_vector*, gsl_vector*);
 };
 #endif
