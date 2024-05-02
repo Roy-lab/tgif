@@ -46,26 +46,26 @@ TGIF-DB identifies conserved and dynamic TAD boundary regions.
 
 ### Basic usage
 ```
-./tgif-db input/tgif-db/tree.txt input/tgif-db/coordinates.bed -o output/tgif-db/
+./tgif-db input/tgif-db/chr19_tree.txt input/tgif-db/chr19_25kb.bed -o output/tgif-db/
+./tgif-db input/tgif-db/chr19_tree.txt input/tgif-db/chr19_25kb.bed -k 5 -o output/tgif-db/k5_
 ```
-- `input/tgif-db/tree.txt` specifies the tree file, which contains file locations to individual task matrices (paths are relative to location of run_tgif executable location; more details below). 
-- `input/tgif-db/coordinates.bed` is a bed file specifying the start and end coordinates of each bin whose index is referred to in the sparse-format matrix files (more details below).
+- `input/tgif-db/chr19_tree.txt` specifies the tree file, which contains file locations to individual task matrices (paths are relative to location of run_tgif executable location; more details below). 
+- `input/tgif-db/chr19_25kb.bed` is a bed file specifying the start and end coordinates of each bin whose index is referred to in the sparse-format matrix files (more details below).
+- Optional: `-k 5` By default, TGIF-DC operates with k=2 and finds 2 clusters of genomic regions that correspond to A or B compartments. To find subcompartments, i.e., more granular clusters, specify a higher k.
 -	Optional: `-o output/tgif-db/` will put all output files to output/tgif-db/ directory. By default the output files will be saved to the current directory. Check out the example output directory in the repo.
 
 
 ### Input tree file format
 - This file specifies the task hierarchy, where each task represents some biological condition and has its own input matrix.
-- See example in [input/tgif-db/tree.txt](https://github.com/Roy-lab/tgif/blob/main/input/tgif-db/tree.txt).
+- See example in [input/tgif-db/chr19_tree.txt](https://github.com/Roy-lab/tgif/blob/main/input/tgif-db/chr19_tree.txt).
 ```
-1	5	leaf1	input/matrix1.txt
-2	5	leaf2	input/matrix2.txt
-3	6	leaf3	input/matrix3.txt
-4	6	leaf4	input/matrix4.txt
-5	7	branch12	N/A
-6	7	branch34	N/A
-7	-1	root	N/A
+1	5	ES	input/tgif-db/ES_chr19_25kb.txt
+2	4	NPC	input/tgif-db/NPC_chr19_25kb.txt
+3	4	CN	input/tgif-db/CN_chr19_25kb.txt
+4	5	branch1	N/A
+5	-1	root	N/A
 ```
-All 4 columns are required. If you want a flat tree or do not care about the task hierarchy, point all nodes to have the root node as the parent.
+All 4 columns are required. If you want a flat tree or do not care about the task hierarchy, point all nodes to have the root node as the parent. If you'd like a tree structure suggested based on the structural similarity of the input matrices, see [suggest_tree/](https://github.com/Roy-lab/tgif/tree/main/suggest_tree).
 - Column 1: **node ID**; start from 1 and move up.
 - Column 2: **parent node ID**; right now the implementation will only work correctly if you ID all children nodes before a parent node (so start from the lowest depth of tree, move to next level, till you hit the root, which should be the last node ID.)
 - Column 3: **node alias**, used to refer to each input matrix/task in the output files.
@@ -74,24 +74,31 @@ All 4 columns are required. If you want a flat tree or do not care about the tas
 ### Input matrix file format
 - Each of the matrix files referred to in the tree file.
 - 0-indexed, tab-delimited, sparse-matrix format, no header
-- See example in [input/tgif-db/matrix1.txt](https://github.com/Roy-lab/tgif/blob/main/input/tgif-db/matrix1.txt).
+- Column 1: index of region or bin A
+- Column 2: index of region or bin B
+- Column 3: interaction count between bin A and B
+- See example in [input/tgif-db/ES_chr19_25kb.txt](https://github.com/Roy-lab/tgif/blob/main/input/tgif-db/ES_chr19_25kb.txt).
 ```
-0	0	1000.2
-0	1	1201.78
-10	1	200.7
+0       0       4454.112629
+0       1       1280.765686
+1       1       4216.131160
 ...
 ```
 
 ### Input coordinates file format
 - This file specifies the starting and ending coordinates of each bin whose index is referred to in the matrix files.
 - The matrices are 0-indexed (i.e. first entry index is [0,0]) and they must share a common coordinates file.
-- This coordinates bed file is tab-delimited.
-- See exmaple in [input/tgif-db/coordinates.bed](https://github.com/Roy-lab/tgif/blob/main/input/tgif-db/coordinates.bed).
+- Tab-delimited
+- Column 1: chromosome
+- Column 2: bin start coordinate
+- Column 3: bin end coordinate
+- Column 4: bin index (starting at 0)
+- See exmaple in [input/tgif-db/chr19_25kb.bed](https://github.com/Roy-lab/tgif/blob/main/input/tgif-db/chr19_25kb.bed).
 ```
-chr5	0	40000	0
-chr5	40000	80000	1
-chr5	80000	120000	2
-chr5	120000	160000	3
+19      3075000 3100000 0
+19      3100000 3125000 1
+19      3125000 3150000 2
+19      3150000 3175000 3
 ...
 ```
 
@@ -129,36 +136,47 @@ Memory usage: 241MB
 ```
 
 ### Output file 1: significant boundaries
-- Each of the input matrix/task will have a column in the `significant_boundaries_summit_only.txt` file.
-- Each row corresponds to a genomic region (i.e. 1st row below the header = 1st genomic region/bin in the coordinates bed file).
-- 0 = non-boundary; 1 = significant boundary
+- A bed file called `significant_boundaries_summit_only.txt` denotes the boundary status of each region.
+- Each row = a genomic region.
+- Each column = each of the input matrix/condition.
+  - 0 = non-boundary;
+  - 1 = significant boundary;
+  - N/A = given region was filted out due to sparsity.
 - See example in [output/tgif-db/significant\_boundaries_summit_only.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-db/significant_boundaries_summit_only.txt).
 - NOTE: `significant_boundaries_summit_only.txt` marks only the region with the highest boundary score if a consecutive stretch of regions is flagged as significant boundaries. For the full set of such regions, see `significant_boundaries.txt` file which is also generated by default.
 ```
-leaf1	leaf2	leaf3	leaf4
-0	0	0	0	
-0	0	0	0	
-0	0	0	0	
-0	0	0	1
+#chro	start  end	ES	NPC	CN
+19	3075000	3100000	N/A	N/A	N/A	
+19	3100000	3125000	N/A	N/A	N/A	
+19	3125000	3150000	0	0	0	
+19	3150000	3175000	0	0	0	
+...
+19	3575000	3600000	1	1	1
 ...
 ```
-In the example output shown above, the 4th bin/region in leaf4 task has a significant boundary.
+In the example output above, chr19 3575000-3600000 is a significant boundary in all three conditions (ES, NPC, CN).
 
-### Output file 2: annotations
-- This is a bed file annotating each of the genomic regions with its task-specific boundary status.
-- See example in [output/tgif-db/annotations.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-db/annotations.txt).
+### Output file set 2: pairwise significantly _differential_ boundaries (sigDB)
+- For each pair of input matrices or conditions, a bed file `A_vs_B_significantly_differential_boundary_regions.txt` is generated, listing only regions that are sigDB in the pairwise comparison of A and B.
+- Column 1: chromosome
+- Column 2: bin start coordinate
+- Column 3: bin end coordinate
+- Column 4: absolute difference in boundary score between conditions A and B being compared
+- Column 5: p-value of the absolute difference
+- Column 6: adjusted p-value after FDR correction
+- See example in [output/tgif-db/ES_vs_CN_significantly_differential_boundary_regions.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-db/ES_vs_CN_significantly_differential_boundary_regions.txt).
 ```
-chr5	0	40000	non-boundary
-chr5	40000	80000	non-boundary
-chr5	80000	120000	non-boundary
-chr5	120000	160000	boundary specific to leaf4
+#chro	start	end	|diff|	pval	padj
+19	4250000	4275000	0.019795	0.000351258	0.00195699	
+19	4750000	4775000	0.0195557	0.000418252	0.00202151	
+19	6350000	6375000	0.0432202	2.64661e-16	0.000430108
 ```
-In the example shown above, the genomic region chr5:120000-160000 contains a boundary specific to leaf4 task.
+In the example shown above, the genomic region chr19:4250000-4275000 contains a sigDB between ES and NPC condition.
 
 ### Optional output files
 
 #### boundary scores
-Using the `-b` flag, the user can print the boundary score for each region and for each task to `boundary_score.txt` file. Also, the scores used as the null distribution to test each boundary score's significance will be saved to `background_score.txt`. The format is the same as `significant_boundaries_summit_only.txt` file, but each entry is a boundary score instead.
+Using the `-b` flag, the user can print the boundary score for each region and for each task to `boundary_score.txt` file.  The format is the same as `significant_boundaries_summit_only.txt` file, but each entry is a boundary score instead. Also, the scores used as the null distribution to test each boundary score's significance will be saved to `background_score.txt`.
 
 #### boundary p-values
 Using the `-p` flag, the user can print the p-values of each boundary score to `boundary_pval.txt` file. The adjusted p-values after FDR correction is printed to `boundary_adj_pval.txt`. The format is the same as `significant_boundaries_summit_only.txt` file, but each entry is a p-value instead.
@@ -198,6 +216,9 @@ All 4 columns are required. If you want a flat tree or do not care about the tas
 ### Input matrix file format
 - Each of the matrix files referred to in the tree file.
 - 0-indexed, tab-delimited, sparse-matrix format, no header
+- Column 1: index of region or bin A
+- Column 2: index of region or bin B
+- Column 3: interaction count between bin A and B
 - See example in [input/tgif-dc/ES_chr19_100kb.txt](https://github.com/Roy-lab/tgif/blob/main/input/tgif-dc/ES_chr19_100kb.txt).
 - Note that TGIF-DC assumes these are raw counts. If the input is already normalized O/E counts, use the `-e` flag (refer to the optional arguments section below).
 ```
@@ -214,7 +235,11 @@ All 4 columns are required. If you want a flat tree or do not care about the tas
 ### Input coordinates file format
 - This file specifies the starting and ending coordinates of each bin whose index is referred to in the matrix files.
 - The matrices are 0-indexed (i.e. first entry index is [0,0]) and they must share a common coordinates file.
-- This coordinates bed file is tab-delimited.
+- Tab-delimited
+- Column 1: chromosome
+- Column 2: bin start coordinate
+- Column 3: bin end coordinate
+- Column 4: bin index (starting at 0)
 - See exmaple in [input/tgif-dc/chr19_100kb.bed](https://github.com/Roy-lab/tgif/blob/main/input/tgif-dc/chr19_100kb.bed).
 ```
 19	3000000	3100000	0
@@ -229,16 +254,35 @@ All 4 columns are required. If you want a flat tree or do not care about the tas
 |:--------:|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
 |     1    | <input tree file>            | This file specifies the task hierarchy, where each task represents some biological condition and has its own input matrix. See  documentation above for more details, format, and example. | N/A                                       |
 |     2    | <input coordinates bed file> | This is a mapping each index in the input matrix file to a chromosomal coordinate. See documentation above for more  details, format, and example.                       | N/A                                       |
+| optional | -k <number of subcompartments>  | 	By default, TGIF-DC operates with k=2 and finds 2 clusters of genomic regions that correspond to A or B compartments. To find subcompartments, i.e., more granular clusters, specify a higher k.     | 2 (i.e. find 2 compartments) |
 | optional | -o <output path and prefix>  | Output file path and prefix. Note: will NOT create a directory if the specified directory does not already exist.                                                                          | Output files saved to current  directory. |
 | optional | -l                           | Generate a file called parameters.log under the specified output path (or current directory by default) that lists the parameter settings used.                                            | No log file of parameters saved.          |
 | optional | -a <alpha>                   | Specify an integer value used for the strength of the tree regularization.                                                                                                                 | 1000000                                   |
 | optional | -e                           | Use this flag if the input matrices for TGIF-DC are O/E count matrices.                                                                                                        | TGIF-DC assumes input matrices are raw count matrices. |
 | optional | -u                           | Generate output files that contain the factors Us and Vs.	                                                                                                                    | No factor files are saved.                             |
 
+### Output file: cluster assignments
+- See example in [output/tgif-dc/cluster_assignment.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-dc/cluster_assignment.txt) and [output/tgif-dc/k5_cluster_assignment.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-dc/k5_cluster_assignment.txt).
+- For all settings of k, TGIF-DC returns a `cluster_assignment.txt` file, listing the cluster assignments of each region. 
+- Each row = genomic region/bin
+- Each input matrix/condition has a column denoting compartment A or B.
+- In the example below, TGIF-DC was run with `-k 5` to find subcompartments or more than 2 clusters of regions; chr19 3300000-3400000 belongs to cluster 4 in ES and CN states.
+```
+#chro	startnd	ES	NPC	CN
+19	3000000	3100000	0	0	0	
+19	3100000	3200000	0	0	0	
+19	3200000	3300000	4	0	0	
+19	3300000	3400000	4	0	4	
+19	3400000	3500000	4	4	4	
+19	3500000	3600000	1	4	1
+...
+```
+
 ### Output file: compartment assignments
 - See example in [output/tgif-dc/compartment_assignment.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-dc/compartment_assignment.txt).
-- `compartment_assignment.txt` is a bed file, where the first row contains the column header and and each subsequent row corresponds to a genomic region and its compartment assignment (A or B) for each task/context.
-- The first column is the chromosome ID, the second column is the start coordinate of the genomic bin, the third the end coordinate, and each subsequent column corresponds to 1 task or context specified in the tree file.
+- Under the default k=2, TGIF-DC returns a `compartment_assignment.txt` file, listing the compartment assignments of each region based on their mean O/E counts.
+- Each row = genomic region/bin
+- Each input matrix/condition has a column denoting compartment A or B. 
 - In the example below, chr19 region 3000000-3100000 belongs to compartment B in ES, NPC, and CN cell states; chr19 region 3200000-3300000 belongs to compartment A in ES and B in NPC, and CN cell states.
 ```
 #chro	start	end	ES	NPC	CN
@@ -250,6 +294,23 @@ All 4 columns are required. If you want a flat tree or do not care about the tas
 19	3500000	3600000	A	A	A
 ...
 ```
+
+### Output file set 2: pairwise significantly differential compartmental regions (_sigDC_)
+- For each pair of input matrices or conditions, a bed file `A_vs_B_significantly_differential_compartmental_regions.txt` is generated, listing only regions that are sigDC in the pairwise comparison of A and B.
+- Column 1: chromosome
+- Column 2: bin start coordinate
+- Column 3: bin end coordinate
+- Column 4: cosine distance between conditions A and B's latent feature from factor
+- Column 5: p-value of the distance
+- Column 6: adjusted p-value after FDR correction
+- See example in [output/tgif-db/ES_vs_CN_significantly_differential_compartmental_regions.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-db/ES_vs_CN_significantly_differential_compartmental_regions.txt).
+```
+#chro	start	end	|diff|	pval	padj
+19	11200000	11300000	0.179182	0.00327075	0.00660377	
+19	11800000	11900000	0.230168	0.000107882	0.00463122	
+19	14000000	14100000	0.246547	2.97501e-05	0.00394511
+```
+In the example shown above, the genomic region chr19:11200000-11300000 is a sigDC between ES and CN condition.
 
 ### Optional output files
 
