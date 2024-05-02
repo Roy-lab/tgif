@@ -1,4 +1,4 @@
-#chro	startnd	ES	NPC	CN
+#chro	start	end	ES	NPC	CN
 19	3000000	3100000	0	0	0	
 19	3100000	3200000	0	0	0	
 19	3200000	3300000	4	0	0	

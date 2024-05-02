@@ -319,7 +319,7 @@ int io::write_dense_matrix_with_bed_header_and_map(string outputFile, string chr
 	int colNum = X-> size2;
 	ofstream ofs;
 	ofs.open(outputFile.c_str());
-	ofs << "#chro\tstart\end\t" << header << endl;
+	ofs << "#chro\tstart\tend\t" << header << endl;
 	for (int i = 0; i < rowNum; i++) {
 		ofs << chro << "\t" << coord[i] << "\t" << coord[i]+binSize << "\t";
 		for (int j = 0; j < colNum; j++) {

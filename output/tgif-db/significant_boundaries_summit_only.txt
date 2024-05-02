@@ -1,4 +1,4 @@
-#chro	startnd	ES	NPC	CN
+#chro	start	end	ES	NPC	CN
 19	3075000	3100000	N/A	N/A	N/A	
 19	3100000	3125000	N/A	N/A	N/A	
 19	3125000	3150000	0	0	0	
