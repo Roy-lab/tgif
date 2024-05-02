@@ -1,3 +1,0 @@
-1	ES	input/mat/ES_chr19_25kb.txt
-2	NPC	input/mat/NPC_chr19_25kb.txt
-3	CN	input/mat/CN_chr19_25kb.txt
