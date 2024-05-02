@@ -47,11 +47,9 @@ TGIF-DB identifies conserved and dynamic TAD boundary regions.
 ### Basic usage
 ```
 ./tgif-db input/tgif-db/chr19_tree.txt input/tgif-db/chr19_25kb.bed -o output/tgif-db/
-./tgif-db input/tgif-db/chr19_tree.txt input/tgif-db/chr19_25kb.bed -k 5 -o output/tgif-db/k5_
 ```
 - `input/tgif-db/chr19_tree.txt` specifies the tree file, which contains file locations to individual task matrices (paths are relative to location of run_tgif executable location; more details below). 
 - `input/tgif-db/chr19_25kb.bed` is a bed file specifying the start and end coordinates of each bin whose index is referred to in the sparse-format matrix files (more details below).
-- Optional: `-k 5` By default, TGIF-DC operates with k=2 and finds 2 clusters of genomic regions that correspond to A or B compartments. To find subcompartments, i.e., more granular clusters, specify a higher k.
 -	Optional: `-o output/tgif-db/` will put all output files to output/tgif-db/ directory. By default the output files will be saved to the current directory. Check out the example output directory in the repo.
 
 
@@ -191,9 +189,11 @@ TGIF-DC identifies conserved and dynamic compartment regions. Usage for TGIF-DC 
 ### Basic usage
 ```
 ./tgif-dc input/tgif-dc/chr19_tree.txt input/tgif-dc/chr19_100kb.bed -o output/tgif-dc/
+./tgif-dc input/tgif-dc/chr19_tree.txt input/tgif-dc/chr19_100kb.bed -k 5 -o output/tgif-dc/
 ```
 - `input/tgif-dc/chr19_tree.txt` specifies the tree file, which contains file locations to individual task matrices (paths are relative to location of run_tgif executable location; more details below). 
 - `input/tgif-dc/chr19_100kb.bed` is a bed file specifying the start and end coordinates of each bin whose index is referred to in the sparse-format matrix files (more details below).
+- Optional: `-k 5` By default, TGIF-DC operates with k=2 and finds 2 clusters of genomic regions that correspond to A or B compartments. To find subcompartments, i.e., more granular clusters, specify a higher k.
 -	Optional: `-o output/tgif-dc/` will put all output files to output/tgif-dc/ directory. By default the output files will be saved to the current directory. Check out the example output directory in the repo.
 
 
