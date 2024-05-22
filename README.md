@@ -33,7 +33,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${CONDA_PREFIX}/lib
 ```
 make tgif
 ```
-5. If all went well, you won't get any alarming messages, and you will see an executable named `run_tgif` created in the same directory. A quick test below will print the manual for running TGIF:
+5. If all went well, you won't get any alarming messages, and you will see executables named `tgif-db` and `tgif-dc` created in the same directory. A quick test below will print the manual for running TGIF:
 ```
 ./tgif-db -h
 ```
