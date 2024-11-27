@@ -323,6 +323,7 @@ int main(int argc, char **argv)
  	*Pairwise significantly differential boundaries
  	***/
 	gsl_vector* dist = gsl_vector_alloc(N);
+	int loss[N];
 	gsl_vector* pval = gsl_vector_alloc(N);
 	gsl_vector* qval = gsl_vector_alloc(N);
 	gsl_vector* reject_null = gsl_vector_alloc(N);
@@ -334,6 +335,9 @@ int main(int argc, char **argv)
 				double diff = gsl_matrix_get(boundaryScore, idx, i) - gsl_matrix_get(boundaryScore, idx, j);
 				if (diff < 0) {
 					diff  = diff * -1;
+					loss[idx] = i;	
+				} else {
+					loss[idx] = j;
 				}
 				gsl_vector_set(dist, idx, diff);
 			}		
@@ -367,7 +371,8 @@ int main(int argc, char **argv)
 				}
 				writeToFile[idx] = changed;
 			} 
-			io::write_significant_regions(pairFileName + ".txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N);	
+			//io::write_significant_regions(pairFileName + ".txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N);	
+			io::write_sigDB(pairFileName + ".txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N, aliases, loss);	
 			//io::write_significant_regions_for_debug(pairFileName + "_DEBUG.txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N);
 		}
 	}

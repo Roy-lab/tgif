@@ -351,6 +351,23 @@ int io::write_significant_regions(string outputFile, string chro, vector<int>& c
 	return 0;
 }
 
+int io::write_sigDB(string outputFile, string chro, vector<int>& coord, int binSize, bool writeToFile[], gsl_vector* metric, gsl_vector* pval, gsl_vector* qval, gsl_vector* reject_null, int map[], int n, vector<string>& aliases, int loss[]) {
+	ofstream ofs;
+	ofs.open(outputFile.c_str());
+	ofs << "#chro\tstart\tend\t|diff|\tpval\tpadj\tlost in" << endl;
+	for (int i=0; i <n; i++) {
+		int new_i = map[i];
+		if (new_i >= 0) {
+			if ((writeToFile[new_i]) && (gsl_vector_get(reject_null, new_i) == 1)) { 
+				ofs << chro << "\t" << coord[i] << "\t" << coord[i]+binSize << "\t" << gsl_vector_get(metric, new_i) << "\t" << gsl_vector_get(pval, new_i) << "\t" << gsl_vector_get(qval, new_i) << "\t" <<  aliases[loss[new_i]] << endl;
+			}
+		}
+	}
+	ofs.close();
+	return 0;
+}
+
+
 int io::write_significant_regions_for_debug(string outputFile, string chro, vector<int>& coord, int binSize, bool writeToFile[], gsl_vector* metric, gsl_vector* pval, gsl_vector* qval, gsl_vector* reject_null, int map[], int n) {
 	ofstream ofs;
 	ofs.open(outputFile.c_str());

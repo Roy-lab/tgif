@@ -145,6 +145,7 @@ int TGIF::print_factors() {
 	for (vector<Node*>::iterator itr=tree.begin(); itr!=tree.end(); ++itr) {
 		(*itr)->write_factors_to_file(output_prefix);
 	}
+	return 0;
 }
 
 int TGIF::clean() {
