@@ -162,14 +162,15 @@ In the example output above, chr19 3575000-3600000 is a significant boundary in 
 - Column 4: absolute difference in boundary score between conditions A and B being compared
 - Column 5: p-value of the absolute difference
 - Column 6: adjusted p-value after FDR correction
+- Column 7: context in which boundary is lost (either A or B)
 - See example in [output/tgif-db/ES_vs_CN_significantly_differential_boundary_regions.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-db/ES_vs_CN_significantly_differential_boundary_regions.txt).
 ```
-#chro	start	end	|diff|	pval	padj
-19	4250000	4275000	0.019795	0.000351258	0.00195699	
-19	4750000	4775000	0.0195557	0.000418252	0.00202151	
-19	6350000	6375000	0.0432202	2.64661e-16	0.000430108
+#chro	start	end	|diff|	pval	padj	lost in
+19	4250000	4275000	0.019795	0.000351258	0.00195699	ES	
+19	4750000	4775000	0.0195557	0.000418252	0.00202151	CN
+19	6350000	6375000	0.0432202	2.64661e-16	0.000430108	ES
 ```
-In the example shown above, the genomic region chr19:4250000-4275000 contains a sigDB between ES and NPC condition.
+In the example shown above, the genomic region chr19:4250000-4275000 contains a sigDB between ES and CN condition.
 
 ### Optional output files
 
