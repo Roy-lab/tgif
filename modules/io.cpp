@@ -386,6 +386,19 @@ int io::write_sigDB(string outputFile, string chro, vector<int>& coord, int binS
 			shifted = 0; 
 		}
 	}
+
+	int idx = sigDbs.back();
+	int idx_mapped = map[idx];
+	int my_loss = loss[idx_mapped];
+	ofs << chro << "\t" << coord[idx] << "\t" << coord[idx]+binSize << "\t" << gsl_vector_get(metric, idx_mapped) << "\t" << gsl_vector_get(pval, idx_mapped) << "\t" << gsl_vector_get(qval, idx_mapped) << "\t";
+	if (shifted == 1) {
+		ofs << "shifted" << endl;
+	} else if (my_loss == 0) {
+		ofs << "created in " << alias << endl;
+	} else if (my_loss == 1) {
+		ofs << "deleted in " << alias << endl;
+	}
+
 	ofs.close();
 	return 0;
 }
