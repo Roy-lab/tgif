@@ -165,10 +165,11 @@ In the example output above, chr19 3575000-3600000 is a significant boundary in 
 - Column 7: annotation of type of change; shifted if a another sigDB is found within 5 bins in the other context; otherwise deleted or created in the other context.
 - See example in [output/tgif-db/ES_vs_CN_significantly_differential_boundary_regions.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-db/ES_vs_CN_significantly_differential_boundary_regions.txt).
 ```
-#chro	start	end	|diff|	pval	padj	lost in
-19	4250000	4275000	0.019795	0.000351258	0.00195699	ES	
-19	4750000	4775000	0.0195557	0.000418252	0.00202151	CN
-19	6350000	6375000	0.0432202	2.64661e-16	0.000430108	ES
+#chro	start	end	|diff|	pval	padj	annotation
+...
+19	12450000	12475000	0.036234	1.05578e-11	0.000666667	deleted in CN
+19	12850000	12875000	0.0237256	1.45807e-05	0.00148387	created in CN
+19	13900000	13925000	0.0190819	0.00058718	0.00212903	shifted
 ```
 In the example shown above, the genomic region chr19:4250000-4275000 contains a sigDB between ES and CN condition.
 
