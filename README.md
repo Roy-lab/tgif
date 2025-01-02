@@ -162,7 +162,7 @@ In the example output above, chr19 3575000-3600000 is a significant boundary in 
 - Column 4: absolute difference in boundary score between conditions A and B being compared
 - Column 5: p-value of the absolute difference
 - Column 6: adjusted p-value after FDR correction
-- Column 7: context in which boundary is lost (either A or B)
+- Column 7: annotation of type of change; shifted if a another sigDB is found within 5 bins in the other context; otherwise deleted or created in the other context.
 - See example in [output/tgif-db/ES_vs_CN_significantly_differential_boundary_regions.txt](https://github.com/Roy-lab/tgif/blob/main/output/tgif-db/ES_vs_CN_significantly_differential_boundary_regions.txt).
 ```
 #chro	start	end	|diff|	pval	padj	lost in
