@@ -351,16 +351,39 @@ int io::write_significant_regions(string outputFile, string chro, vector<int>& c
 	return 0;
 }
 
-int io::write_sigDB(string outputFile, string chro, vector<int>& coord, int binSize, bool writeToFile[], gsl_vector* metric, gsl_vector* pval, gsl_vector* qval, gsl_vector* reject_null, int map[], int n, vector<string>& aliases, int loss[]) {
+int io::write_sigDB(string outputFile, string chro, vector<int>& coord, int binSize, bool writeToFile[], gsl_vector* metric, gsl_vector* pval, gsl_vector* qval, gsl_vector* reject_null, int map[], int n, string alias, int loss[]) {
+	vector<int> sigDbs;
+	for (int idx = 0; idx < n; idx++) {
+		int new_idx = map[idx];
+		if ((new_idx >= 0) && writeToFile[new_idx] && (gsl_vector_get(reject_null, new_idx) == 1)) {
+			sigDbs.push_back(idx);
+		}
+	}
+
 	ofstream ofs;
 	ofs.open(outputFile.c_str());
-	ofs << "#chro\tstart\tend\t|diff|\tpval\tpadj\tlost in" << endl;
-	for (int i=0; i <n; i++) {
-		int new_i = map[i];
-		if (new_i >= 0) {
-			if ((writeToFile[new_i]) && (gsl_vector_get(reject_null, new_i) == 1)) { 
-				ofs << chro << "\t" << coord[i] << "\t" << coord[i]+binSize << "\t" << gsl_vector_get(metric, new_i) << "\t" << gsl_vector_get(pval, new_i) << "\t" << gsl_vector_get(qval, new_i) << "\t" <<  aliases[loss[new_i]] << endl;
-			}
+	ofs << "#chro\tstart\tend\t|diff|\tpval\tpadj\tannotation" << endl;
+	int shifted = 0;
+	for (int i = 0; i < (sigDbs.size()-1); i++) {
+		int idx = sigDbs[i];
+		int idx_mapped = map[idx];
+		int next_idx = sigDbs[i+1];
+		int next_idx_mapped = map[next_idx];
+		int my_loss = loss[idx_mapped];
+		int next_loss = loss[next_idx_mapped];
+		ofs << chro << "\t" << coord[idx] << "\t" << coord[idx]+binSize << "\t" << gsl_vector_get(metric, idx_mapped) << "\t" << gsl_vector_get(pval, idx_mapped) << "\t" << gsl_vector_get(qval, idx_mapped) << "\t";
+		if ( ((next_idx - idx)<=5) && (my_loss != next_loss)) {
+			ofs << "shifted" << endl;
+			shifted = 1;
+		} else if (shifted == 1) {
+			ofs << "shifted" << endl;
+			shifted = 0;
+		} else if (my_loss == 0) {
+			ofs << "created in " << alias << endl;
+			shifted = 0;
+		} else if (my_loss == 1) {
+			ofs << "deleted in " << alias << endl;
+			shifted = 0; 
 		}
 	}
 	ofs.close();

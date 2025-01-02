@@ -27,7 +27,7 @@ namespace io
 	int write_compartments_to_file(string,string,vector<int>&,int,string, gsl_matrix*, map<int,char>, int[], int);
 	int write_dense_matrix_with_bed_header_and_map(string, string, vector<int>&, int, string, gsl_matrix*, int[], int);
 	int write_significant_regions(string,string, vector<int>&, int, bool[], gsl_vector*, gsl_vector*, gsl_vector*, gsl_vector*,  int[], int);
-	int write_sigDB(string,string, vector<int>&, int, bool[], gsl_vector*, gsl_vector*, gsl_vector*, gsl_vector*,  int[], int, vector<string>&, int[]);
+	int write_sigDB(string,string, vector<int>&, int, bool[], gsl_vector*, gsl_vector*, gsl_vector*, gsl_vector*,  int[], int, string, int[]);
 	int write_significant_regions_for_debug(string,string, vector<int>&, int, bool[], gsl_vector*, gsl_vector*, gsl_vector*, gsl_vector*,  int[], int);
 };
 #endif

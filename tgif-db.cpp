@@ -335,9 +335,9 @@ int main(int argc, char **argv)
 				double diff = gsl_matrix_get(boundaryScore, idx, i) - gsl_matrix_get(boundaryScore, idx, j);
 				if (diff < 0) {
 					diff  = diff * -1;
-					loss[idx] = i;	
+					loss[idx] = 0; //i;	
 				} else {
-					loss[idx] = j;
+					loss[idx] = 1; //j;
 				}
 				gsl_vector_set(dist, idx, diff);
 			}		
@@ -372,7 +372,7 @@ int main(int argc, char **argv)
 				writeToFile[idx] = changed;
 			} 
 			//io::write_significant_regions(pairFileName + ".txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N);	
-			io::write_sigDB(pairFileName + ".txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N, aliases, loss);	
+			io::write_sigDB(pairFileName + ".txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N, aliases[j], loss);	
 			//io::write_significant_regions_for_debug(pairFileName + "_DEBUG.txt", chro, coords, binSize, writeToFile, dist, pval, qval, reject_null, map, original_N);
 		}
 	}
